@@ -1,0 +1,32 @@
+#!/bin/sh
+
+set -e
+exec 3>&1 # make stdout available as fd 3 for the result
+exec 1>&2 # redirect all output to stderr for logging
+set -x
+
+cd $1
+jq . <&0 >params
+
+mkdir -p ~/.config
+jq -r .source.api_token < params > ~/.config/copr
+project=$(jq -r .source.project < params)
+package=$(jq -r .source.package < params)
+glob=$(jq -r .params.glob < params)
+
+copr-cli build --nowait $project $glob
+
+now=$(date +%s)
+for i in $(seq 12); do
+    copr-cli get-package $project --name $package --with-latest-build > package.json || echo '{}' > package.json
+    ts=$(jq .latest_build.submitted_on < package.json)
+    if [ -z $ts ] || [ $ts = null ] || [ $ts -lt $(expr $now - 60) ]; then
+        echo "Waiting for build to be imported..." >&2
+        sleep 5
+        continue
+    fi
+    jq '{"version": {"version": .latest_build.pkg_version}, "metadata": [{"name": "build_id", "value": .latest_build.id|tostring}]}' < package.json | cat >&3
+    exit 0
+done
+echo "Build was not imported...." 2>&1
+exit 1
