@@ -15,8 +15,8 @@ package=$(jq -r .source.package < params)
 version=$(jq -r .version.version < params)
 
 copr-cli get-package $project --name $package --with-all-builds > package.json
-build_id=$(jq ".builds | map(select(.pkg_version==\"$version\"))[0].id" < package.json)
-state=$(jq ".builds | map(select(.pkg_version==\"$version\"))[0].state" < package.json)
+build_id=$(jq ".builds | map(select(.source_package.version==\"$version\"))[0].id" < package.json)
+state=$(jq ".builds | map(select(.source_package.version==\"$version\"))[0].state" < package.json)
 if [ $build_id = "null" ]; then
     echo "Version $version not found" >&2
     exit 1

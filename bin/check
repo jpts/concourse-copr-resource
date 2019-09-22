@@ -19,9 +19,9 @@ if [ ! -s package.json ]; then
     exit 0
 fi
 
-if [ $(jq .latest_succeeded_build.pkg_version < package.json) = "null" ]; then
+if [ $(jq .latest_succeeded_build.source_package.version < package.json) = "null" ]; then
     echo '[]' >&3
     exit 0
 fi
 
-jq '[{"version": .latest_succeeded_build.pkg_version}]' < package.json | cat >&3
+jq '[{"version": .latest_succeeded_build.source_package.version}]' < package.json | cat >&3
