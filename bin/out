@@ -20,7 +20,7 @@ now=$(date +%s)
 for i in $(seq 12); do
     copr-cli get-package $project --name $package --with-latest-build > package.json || echo '{}' > package.json
     ts=$(jq .latest_build.submitted_on < package.json)
-    if [ -z $ts ] || [ $ts = null ] || [ $ts -lt $(expr $now - 60) ]; then
+    if [ -z $ts ] || [ $ts = null ] || [ $ts -lt $(expr $now - 120) ]; then
         echo "Waiting for build to be imported..." >&2
         sleep 5
         continue
